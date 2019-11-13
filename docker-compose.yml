@@ -1,0 +1,50 @@
+version: '2'
+services:
+  web:
+    container_name: web
+    restart: always
+    build: .
+    command: npm start
+    volumes:
+      - .:/usr/app/
+      - /usr/app/node_modules
+    ports:
+      - 3000:3000
+    depends_on:
+      - mongo
+  mongo:
+    container_name: mongo
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_DATABASE=ainaa
+      - MONGODB_USER=ainaa
+      - MONGODB_PASS=ainaa
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - /tmp/db:/data/db
+
+
+
+
+
+# version: '2'
+# services:
+#   web:
+#     build: .
+#     command: npm run dev
+#     volumes:
+#       - .:/usr/app/
+#       - /usr/app/node_modules
+#     ports:
+#       - "3000:3000"
+#     depends_on:
+#       - postgres
+#     environment:
+#       DATABASE_URL: postgres://todoapp@postgres/todos
+#   postgres:
+#     image: postgres:9.6.2-alpine
+#     environment:
+#       POSTGRES_USER: todoapp
+#       POSTGRES_DB: todos
