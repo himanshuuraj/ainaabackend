@@ -16,7 +16,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.get("/", (req, res) => {
   res.send("Hello");
-})
+});
 
 app.use("/userInfo", userInfo);
 
