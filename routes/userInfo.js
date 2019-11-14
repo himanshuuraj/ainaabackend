@@ -37,15 +37,65 @@ router.post("/create", (req, res) => {
 });
 
 router.get("/:id", (req, res) => {
-    
+  UserInfoDetails.findById(req.params.id, function(err, user) {
+    if (err) {
+      responseObj.success = false;
+      responseObj.error = err;
+      responseObj.param = req.params;
+      responseObj.message = "Error in getting user data";
+      return res.json(responseObj);
+    } else {
+      responseObj.success = true;
+      responseObj.body = user;
+      responseObj.param = req.params;
+      responseObj.message = "User Data";
+      return res.json(responseObj);
+    }
+  });
 });
 
 router.put("/:id/update", (req, res) => {
-
+  let obj = req.body;
+  UserInfoDetails.findByIdAndUpdate(
+    req.params.id,
+    { $set: obj },
+    function(err, user) {
+      if (err) {
+        responseObj.success = false;
+        responseObj.error = err;
+        responseObj.param = req.params;
+        responseObj.message = "Error in updating user";
+        return res.json(responseObj);
+      } else {
+        responseObj.success = true;
+        responseObj.body = obj;
+        responseObj.param = req.params;
+        responseObj.message = "User updated successfully";
+        return res.json(responseObj);
+      }
+    }
+  );
 });
 
 router.delete("/:id/delete", (req, res) => {
-    
+  UserInfoDetails.findByIdAndRemove(req.params.userId, function(
+    err,
+    user
+  ) {
+    if (err) {
+      responseObj.success = false;
+      responseObj.error = err;
+      responseObj.param = req.params;
+      responseObj.message = "Error in deleting user";
+      return res.json(responseObj);
+    } else {
+      responseObj.success = true;
+      responseObj.body = user;
+      responseObj.param = req.params;
+      responseObj.message = "User deleted successfully";
+      return res.json(responseObj);
+    }
+  });
 });
 
 module.exports = router;
