@@ -2,6 +2,7 @@ var express = require("express");
 var router = express.Router();
 var UserInfoDetails = require("../models/userInfo");
 var utils = require("./../global/utils");
+const {ObjectId} = require('mongodb');
 let responseObj = utils.responseObj;
 
 // Require the controllers WHICH WE DID NOT CREATE YET!!
@@ -14,25 +15,35 @@ router.get("/", (req, res) => {
   res.status(404).json({ text: "Not found" });
 });
 
-router.post("/create", (req, res) => {
+router.post("/create", async (req, res) => {
     let obj = req.body;
     let userInfo = new UserInfoDetails(obj);
-    console.log(userInfo, obj);
+    let user = await UserInfoDetails.find({
+      "email" : obj.email,
+      "password" : obj.password
+    });
+    if(user && user.length > 0){
+      responseObj.success = false;
+      responseObj.error = null;
+      responseObj.param = null;
+      responseObj.message = "User with emailId already exists";
+      return res.json(responseObj);
+    }
     userInfo
         .save()
         .then(userInfo => {
-        responseObj.success = true;
-        responseObj.body = userInfo;
-        responseObj.param = req.body;
-        responseObj.message = "UserInfo Inserted Successfully";
+          responseObj.success = true;
+          responseObj.body = userInfo;
+          responseObj.param = req.body;
+          responseObj.message = "UserInfo Inserted Successfully";
         return res.json(responseObj);
         })
         .catch(err => {
-        responseObj.success = false;
-        responseObj.error = err;
-        responseObj.param = req.body;
-        responseObj.message = "Error in inserting userDetails";
-        return res.json(responseObj);
+          responseObj.success = false;
+          responseObj.error = err;
+          responseObj.param = req.body;
+          responseObj.message = "Error in registering user";
+          return res.json(responseObj);
         });
 });
 
@@ -97,5 +108,44 @@ router.delete("/:id/delete", (req, res) => {
     }
   });
 });
+
+router.post("/login", (req, res) => {
+  let obj = req.body;
+  UserInfoDetails.find({
+    "email" : obj.email,
+    "password" : obj.password
+  }, function(err, user) {
+    if (err) {
+      responseObj.success = false;
+      responseObj.error = err;
+      responseObj.param = req.params;
+      responseObj.message = "Error in login in";
+      return res.json(responseObj);
+    } else {
+      if(user.length > 0){
+        var tempObj = user[0];
+        tempObj = JSON.parse(JSON.stringify(tempObj));
+        tempObj["token"] = obj.firebaseToken;
+        responseObj.success = true;
+        responseObj.body = tempObj;
+        responseObj.param = req.params;
+        responseObj.message = "User Data";
+        UserInfoDetails.findByIdAndUpdate(
+          ObjectId(tempObj._id),
+          { $set: tempObj },
+          function(err, user){
+        });
+      }
+      else{
+        responseObj.success = false;
+        responseObj.body = null;
+        responseObj.param = req.params;
+        responseObj.message = "user not found";
+      }
+      return res.json(responseObj);
+    }
+  });
+});
+
 
 module.exports = router;
