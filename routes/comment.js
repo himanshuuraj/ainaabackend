@@ -1,13 +1,10 @@
 var express = require("express");
 var router = express.Router();
 var PostDetails = require("../models/post");
+var CommentDetails = require("../models/comment");
 var utils = require("./../global/utils");
-var UserInfoDetails = require("../models/userInfo");
 const {ObjectId} = require('mongodb');
-// var request = require('request');
-// var fetch = require('node-fetch');
-var http = require('https');
-var responseObj = utils.responseObj;
+let responseObj = utils.responseObj;
 
 // Require the controllers WHICH WE DID NOT CREATE YET!!
 // var parentDetailController = require("./../controllers/parentController");
@@ -21,7 +18,6 @@ router.get("/", (req, res) => {
 
 router.post("/create", async (req, res) => {
     let obj = req.body;
-    obj["createdAt"] = new Date().getTime();
     let postDetails = new PostDetails(obj);
     postDetails
         .save()
@@ -30,9 +26,7 @@ router.post("/create", async (req, res) => {
           responseObj.body = post;
           responseObj.param = req.body;
           responseObj.message = "Post Inserted Successfully";
-          res.json(responseObj);
-          sendNotification(post);
-          return;
+        return res.json(responseObj);
         })
         .catch(err => {
           responseObj.success = false;
@@ -106,13 +100,11 @@ router.delete("/:id/delete", (req, res) => {
 });
 
 router.get("/start/:start/count/:count", (req, res) => {
-    let start = req.params.start || 0;
-    start = parseInt(req.params.start);
-    let count = req.params.count || 100; 
-    count = parseInt(req.params.count);
+    let start = parseInt(req.params.start);
+    let count = parseInt(req.params.count);
     PostDetails.find()
-        .limit(count)
-        .skip(start)
+        .limit(start)
+        .skip(count)
         .exec(function(err, events) {
             if (err) {
                 responseObj.success = false;
@@ -128,54 +120,6 @@ router.get("/start/:start/count/:count", (req, res) => {
                 return res.json(responseObj);
             }
     });
-});
-
-sendNotification = post => {
-  UserInfoDetails.find({}, function(err, user) {
-      if (!err) {
-        user = user.map(item => {
-          let obj = JSON.parse(JSON.stringify(item));
-          return obj.token;
-        });
-        let url = "https://exp.host/--/api/v2/push/send";
-        let bodyObj = {
-          "to": user,
-          "title": post.firstName + " " + post.lastName,
-          "body": post.text
-        };
-        request.post(url, {
-          json: bodyObj
-        }, (error, res, body) => {
-          if (error) {
-            console.error(error);
-            return;
-          }
-          console.log(`statusCode: ${res.statusCode}`);
-          console.log(body);
-        });
-        // fetch(url, {
-        //   method: 'POST',
-        //   headers: {
-        //       Accept: 'application/json',
-        //       'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify(bodyObj),
-        //   }).then((response) => response.json(), 
-        //   err => {
-        //       console.log("ERR", err);
-        //       // alert(err.message);
-        //       return err;
-        //   })
-        //   .then((responseJson) => {
-        //       return responseJson;
-        //   })
-        //   .catch((error) => {
-        //       console.error("ERROR",error);
-        //       return error;
-        //   });
-      }
-    }
-  );
-}
+})
 
 module.exports = router;
